@@ -1,0 +1,47 @@
+const express = require('express');
+const dotenv = require('dotenv');
+const colors = require('colors');
+const cors = require('cors');
+const cookieParser = require('cookie-parser');
+const errorHandler = require('./middleware/error');
+const connectDB = require('./config/db');
+
+// Load env vars
+dotenv.config({ path: './config/config.env' });
+
+// Connect to database
+connectDB();
+
+// Route files
+const black8ball = require('./routers/black8ball');
+const boards = require('./routers/boards');
+const auth = require('./routers/auth');
+
+const app = express();
+
+// Cors
+app.use(cors({credentials: true, origin: 'http://localhost:8000'}));
+
+// Cookie parser
+app.use(cookieParser());
+
+// Body parser
+app.use(express.json());
+
+// Mount routes
+app.use('/api/v1/get-prediction', black8ball);
+app.use('/api/v1/boards', boards);
+app.use('/api/v1/auth', auth);
+
+// Middleware
+app.use(errorHandler);
+
+const PORT = process.env.PORT || 3000;
+const server = app.listen(PORT, console.log(`Server running ${process.env.NODE_ENV} mode on port ${PORT}`.blue.underline));
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (err, promise) => {
+  console.log(`Error: ${err.message}`.red);
+  // Close server and exit process
+  server.close(() => process.exit(1));
+});
